@@ -1,0 +1,130 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local userInput = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local fishingTool = player.Backpack:FindFirstChild("FishingRod")
+
+-- Create Screen GUI
+local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+screenGui.Name = "FischScriptGui"
+
+-- Function to create buttons
+local function createButton(name, posY, callback)
+    local button = Instance.new("TextButton", screenGui)
+    button.Size = UDim2.new(0, 200, 0, 50)
+    button.Position = UDim2.new(0, 10, 0, posY)
+    button.Text = name
+    button.MouseButton1Click:Connect(callback)
+    return button
+end
+
+-- Auto Fish function (optimized for stealth with intervals)
+local autoFishing = false
+local function toggleAutoFish()
+    autoFishing = not autoFishing
+    spawn(function()
+        while autoFishing do
+            wait(math.random(1.5, 2.5))  -- Randomized interval for stealth
+            if fishingTool then
+                fishingTool:Activate()
+            end
+        end
+    end)
+end
+
+-- Auto Shake function
+local autoShake = false
+local function toggleAutoShake()
+    autoShake = not autoShake
+    spawn(function()
+        while autoShake do
+            wait(math.random(0.5, 1))  -- Slightly randomized intervals
+            print("Shaking...")  -- Replace this with actual shake mechanism
+        end
+    end)
+end
+
+-- Freeze Player function
+local frozen = false
+local function toggleFreeze()
+    frozen = not frozen
+    if frozen then
+        hrp.Anchored = true
+    else
+        hrp.Anchored = false
+    end
+end
+
+-- Teleport to Area function (move with small steps for less detectability)
+local function teleportToArea()
+    local target = workspace:FindFirstChild("FishingZone")  -- Replace with actual zone name
+    if target then
+        local steps = 10
+        for i = 1, steps do
+            hrp.CFrame = hrp.CFrame:Lerp(target.CFrame, i/steps)
+            wait(0.05)  -- Slow down the teleport for stealth
+        end
+    else
+        print("Zone not found.")
+    end
+end
+
+-- Cast to Any Zone from Anywhere (using remote to avoid direct casting)
+local autoCastInZone = false
+local function toggleAutoCastZone()
+    autoCastInZone = not autoCastInZone
+    spawn(function()
+        while autoCastInZone do
+            wait(math.random(1.5, 2.5))  -- Randomized interval
+            if fishingTool then
+                fishingTool:Activate()
+            end
+        end
+    end)
+end
+
+-- Fly function (smoothed movement to avoid detection)
+local flying = false
+local flySpeed = 3  -- Slower fly speed for smooth movement
+local function toggleFly()
+    flying = not flying
+    spawn(function()
+        while flying do
+            runService.RenderStepped:Wait()
+            if userInput:IsKeyDown(Enum.KeyCode.W) then
+                hrp.CFrame = hrp.CFrame + hrp.CFrame.LookVector * flySpeed * runService.RenderStepped:Wait()
+            elseif userInput:IsKeyDown(Enum.KeyCode.S) then
+                hrp.CFrame = hrp.CFrame - hrp.CFrame.LookVector * flySpeed * runService.RenderStepped:Wait()
+            elseif userInput:IsKeyDown(Enum.KeyCode.A) then
+                hrp.CFrame = hrp.CFrame * CFrame.new(-flySpeed * runService.RenderStepped:Wait(), 0, 0)
+            elseif userInput:IsKeyDown(Enum.KeyCode.D) then
+                hrp.CFrame = hrp.CFrame * CFrame.new(flySpeed * runService.RenderStepped:Wait(), 0, 0)
+            end
+        end
+    end)
+end
+
+-- Walk on Water function (uses smooth hover to stay above water level)
+local walkOnWater = false
+local function toggleWalkOnWater()
+    walkOnWater = not walkOnWater
+    spawn(function()
+        while walkOnWater do
+            wait(0.1)
+            if hrp.Position.Y < workspace.Water.Position.Y + 5 then
+                hrp.Velocity = Vector3.new(0, 0, 0)
+                hrp.CFrame = CFrame.new(hrp.Position.X, workspace.Water.Position.Y + 5, hrp.Position.Z)
+            end
+        end
+    end)
+end
+
+-- Create buttons for each feature
+createButton("Auto Fish", 10, toggleAutoFish)
+createButton("Auto Shake", 70, toggleAutoShake)
+createButton("Freeze Player", 130, toggleFreeze)
+createButton("Teleport to Area", 190, teleportToArea)
+createButton("Cast to Any Zone", 250, toggleAutoCastZone)
+createButton("Fly", 310, toggleFly)
+createButton("Walk on Water", 370, toggleWalkOnWater)
